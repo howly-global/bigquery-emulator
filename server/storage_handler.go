@@ -564,15 +564,21 @@ func (s *storageWriteServer) decodeRowData(data []byte, msg *dynamicpb.Message) 
 	}
 	ret := map[string]interface{}{}
 	var decodeErr error
-	msg.Range(func(f protoreflect.FieldDescriptor, val protoreflect.Value) bool {
+
+	fieldDescriptors := msg.Descriptor().Fields()
+
+	for i := 0; i < fieldDescriptors.Len(); i++ {
+		f := fieldDescriptors.Get(i)
+		val := msg.Get(f)
+
 		v, err := s.decodeProtoReflectValue(f, val)
 		if err != nil {
-			decodeErr = err
-			return false
+			return nil, err
 		}
+
 		ret[f.TextName()] = v
-		return true
-	})
+	}
+
 	return ret, decodeErr
 }
 
